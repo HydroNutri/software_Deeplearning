@@ -1,0 +1,238 @@
+# Aquaponics System Configuration
+system:
+  name: "aquaponics_v2"
+  version: "2.0.0"
+  mode: "production"  # development, production
+  log_level: "INFO"
+
+# Edge Device Configuration
+edge:
+  device_type: "raspberry_pi4"  # jetson_nano, raspberry_pi4, jetson_xavier
+  device_id: "edge_001"
+  
+  # Hardware Settings
+  hardware:
+    use_gpu: false
+    cpu_threads: 4
+    memory_limit_mb: 1024
+    
+  # Camera Settings
+  camera:
+    rtsp_url: "rtsp://192.168.1.100:554/stream2"
+    resolution: [640, 480]
+    fps: 10
+    buffer_size: 1
+    
+  # YOLO Model (Edge - Fast Detection)
+  yolo:
+    model_path: "models/yolov5n.pt"  # yolov5n.pt, yolov4-tiny.pt
+    confidence: 0.6
+    iou_threshold: 0.45
+    max_det: 20
+    
+  # Processing Settings
+  processing:
+    frame_skip: 2
+    batch_size: 1
+    queue_max_size: 10
+    
+  # Control Settings
+  control:
+    enable_auto_control: true
+    control_interval: 30  # seconds
+    emergency_threshold: 0.3  # health score
+    
+# Server Configuration
+server:
+  host: "192.168.1.200"
+  port: 5000
+  device_id: "server_001"
+  
+  # Hardware Settings
+  hardware:
+    use_gpu: true
+    gpu_memory_fraction: 0.7
+    cpu_threads: 8
+    
+  # YOLO Model (Server - High Accuracy)
+  yolo:
+    model_path: "models/yolov8m.pt"  # yolov8m.pt, yolov8l.pt
+    confidence: 0.5
+    iou_threshold: 0.4
+    max_det: 50
+    
+  # Processing Settings
+  processing:
+    batch_size: 5
+    queue_max_size: 100
+    analysis_interval: 60  # seconds
+    
+  # Database Settings
+  database:
+    type: "sqlite"  # sqlite, influxdb
+    path: "data/aquaponics.db"
+    backup_interval: 3600  # seconds
+    retention_days: 30
+
+# MQTT Configuration
+mqtt:
+  broker_host: "192.168.1.200"
+  broker_port: 1883
+  username: ""
+  password: ""
+  topics:
+    events: "aquaponics/events"
+    sensors: "aquaponics/sensors"
+    control: "aquaponics/control"
+    status: "aquaponics/status"
+    alerts: "aquaponics/alerts"
+
+# Sensor Configuration
+sensors:
+  enable: true
+  read_interval: 10  # seconds
+  
+  # Water Quality Sensors
+  water:
+    temperature:
+      pin: 18
+      sensor_type: "DS18B20"
+      range: [18.0, 30.0]  # Celsius
+    ph:
+      pin: 19
+      sensor_type: "analog"
+      range: [6.0, 8.0]
+    ec:
+      pin: 20
+      sensor_type: "analog"
+      range: [0.5, 2.0]  # mS/cm
+    dissolved_oxygen:
+      pin: 21
+      sensor_type: "analog"
+      range: [5.0, 10.0]  # mg/L
+      
+  # Environmental Sensors
+  environment:
+    air_temperature:
+      pin: 22
+      sensor_type: "DHT22"
+      range: [15.0, 35.0]
+    humidity:
+      pin: 23
+      sensor_type: "DHT22"
+      range: [40.0, 80.0]
+    light_intensity:
+      pin: 24
+      sensor_type: "analog"
+      range: [0.0, 1.0]
+
+# Control Systems
+control:
+  # Water System
+  water_pump:
+    pin: 25
+    type: "relay"
+    auto_mode: true
+  water_heater:
+    pin: 26
+    type: "pwm"
+    auto_mode: true
+  ph_dosing:
+    pin: 27
+    type: "relay"
+    auto_mode: true
+    
+  # Feeding System  
+  fish_feeder:
+    pin: 28
+    type: "servo"
+    auto_mode: true
+    schedule: ["08:00", "12:00", "18:00"]
+    
+  # Lighting System
+  led_lights:
+    pin: 29
+    type: "pwm"
+    auto_mode: true
+    schedule:
+      on_time: "06:00"
+      off_time: "22:00"
+
+# Object Detection Classes
+detection:
+  classes:
+    fish:
+      id: 0
+      min_size: [20, 20]  # pixels
+      max_size: [200, 200]
+      tracking: true
+    plant:
+      id: 1
+      min_size: [30, 30]
+      max_size: [300, 300]
+      tracking: true
+    food:
+      id: 2
+      min_size: [5, 5]
+      max_size: [50, 50]
+      tracking: false
+
+# Data Analysis Settings
+analysis:
+  # Growth Analysis
+  growth:
+    fish_length_cm_per_pixel: 0.08
+    plant_height_cm_per_pixel: 0.08
+    weight_estimation_factor: 0.8
+    growth_alert_threshold: 0.2  # 20% change
+    
+  # Health Monitoring
+  health:
+    fish_activity_threshold: 0.5
+    plant_color_threshold: [40, 70, 50]  # HSV
+    anomaly_detection_sensitivity: 0.1
+    
+  # Environmental Correlation
+  correlation:
+    temperature_growth_factor: 1.2
+    ph_growth_factor: 1.1
+    light_growth_factor: 1.3
+
+# Alert Configuration
+alerts:
+  email:
+    enable: false
+    smtp_server: "smtp.gmail.com"  
+    smtp_port: 587
+    username: "your_email@gmail.com"
+    password: "your_app_password"
+    recipients: ["admin@aquaponics.com"]
+    
+  sms:
+    enable: false
+    api_key: "your_sms_api_key"
+    recipients: ["+1234567890"]
+    
+  mqtt:
+    enable: true
+    
+  thresholds:
+    temperature_min: 20.0
+    temperature_max: 28.0
+    ph_min: 6.5
+    ph_max: 7.5
+    health_score_min: 0.7
+
+# Web Dashboard
+dashboard:
+  enable: true
+  host: "0.0.0.0"
+  port: 8080
+  refresh_interval: 5  # seconds
+  
+# Development/Debug Settings
+debug:
+  save_frames: false
+  frame_save_path: "debug/frames"
+  log_detections: true
+  performance_monitoring: true
